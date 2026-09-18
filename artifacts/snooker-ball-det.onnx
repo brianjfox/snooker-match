@@ -1,0 +1,19 @@
+{
+  "name": "snooker-ball-det",
+  "version": "1.0.0",
+  "classes": [
+    "ball"
+  ],
+  "trainedAt": "2026-09-18T16:05:05.511Z",
+  "sampleCount": 96,
+  "params": {
+    "baize": [
+      30,
+      114,
+      69
+    ],
+    "diffThreshold": 66,
+    "minRadius": 2.75,
+    "maxRadius": 7.25
+  }
+}
