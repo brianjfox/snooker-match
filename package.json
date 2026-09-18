@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "start": "bun run src/main.ts",
+    "cameras": "bun run scripts/list-cameras.ts",
     "train": "bun run src/trainer/train-cli.ts",
     "test": "bun test",
     "typecheck": "bunx --package typescript tsc --noEmit",
