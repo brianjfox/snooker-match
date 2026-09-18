@@ -26,11 +26,31 @@ Then open:
 - `http://localhost:4750/tv` — read-only TV view for any browser on the LAN.
 - `http://localhost:4750/api/events` — structured JSON event log (AC-10).
 
+### Real camera on macOS
+
+The host build can also score a live table from a USB camera through
+ffmpeg's AVFoundation input (`brew install ffmpeg`). An Elgato Facecam 4K at
+3840x2160 @ 30 fps is the reference setup; any UVC camera AVFoundation lists
+will do.
+
+```sh
+bun run cameras                                   # list video devices
+CAMERA=macos CAMERA_DEVICE=Elgato bun run start   # capture instead of simulate
+```
+
+Tuning (all optional): `CAMERA_SIZE=WxH` (native capture mode, default
+`3840x2160`), `CAMERA_FPS` (default 30), `CAMERA_PIXFMT` (e.g. `uyvy422`),
+`CAMERA_CROP=x,y,w,h` in capture pixels to crop to the table before the
+downsample so the detector gets the most pixels per ball. `FFMPEG=/path`
+overrides the binary. Frames are downsampled to 320x180 with an area filter,
+delivered keep-only-latest like CameraX, and ffmpeg is restarted automatically
+if the camera drops out.
+
 Checks:
 
 ```sh
 bun run typecheck  # tsc --noEmit
-bun test           # 68 tests: vision, rules, trainer, workflow, hub/UI
+bun test           # vision, rules, trainer, workflow, hub/UI, macOS sidecar
 bun run bundle     # dist/main.js + workflow-manifest.json (Android bundle)
 ```
 
@@ -92,7 +112,7 @@ plan names are provided as local shims with the same interfaces:
 
 | Plan primitive        | Local shim                                     |
 | --------------------- | ---------------------------------------------- |
-| CorbitsCore camera sidecar (CameraX) | `SimulatedCameraSidecar` — scripted match at 30 fps (`src/platform/sidecar.ts`) |
+| CorbitsCore camera sidecar (CameraX) | `SimulatedCameraSidecar` — scripted match at 30 fps (`src/platform/sidecar.ts`); `MacOSCameraSidecar` — real USB camera via ffmpeg/AVFoundation (`src/platform/sidecar-macos.ts`) |
 | @corbits/artifacts    | `ArtifactStore` on `artifacts/` (`src/platform/artifacts.ts`) |
 | Interchange workflow state | `WorkflowState` observable store (`src/platform/state.ts`) |
 | Grants manifest       | `GRANT_MANIFEST` + role resolution (`src/platform/grants.ts`) |
@@ -107,7 +127,7 @@ and the model artifact to mount — the packaging step for tablet deployment
 
 ```
 src/types.ts            shared types + workflow state schema (plan task 9)
-src/platform/           state, artifacts, grants, camera sidecar shims
+src/platform/           state, artifacts, grants, camera sidecars (sim, macOS)
 src/vision/             synth, homography, motion, detector, colour,
                         consensus, hungarian, observer
 src/agents/calibration.ts  guided corner+spot calibration (task 3)
@@ -116,7 +136,8 @@ src/workflow.ts         pipeline wiring (task 1)
 src/hub/                server + control/TV pages (tasks 11-13)
 src/trainer/            ModelTrainer + CLI (task 2)
 scripts/bundle.ts       Android-deployable bundle (task 16)
-tests/                  vision, rules, trainer, workflow, hub (task 15)
+scripts/list-cameras.ts AVFoundation device listing (`bun run cameras`)
+tests/                  vision, rules, trainer, workflow, hub, macOS sidecar
 ```
 
 ## Acceptance criteria coverage
